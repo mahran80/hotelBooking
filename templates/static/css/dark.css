@@ -1,0 +1,264 @@
+/* Dark Mode Styles */
+.dark-mode {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.dark-mode .navbar {
+    background-color: #2d2d2d !important;
+}
+
+.dark-mode .navbar-light .navbar-brand,
+.dark-mode .navbar-light .navbar-nav .nav-link {
+    color: #e0e0e0;
+}
+
+/* Search Filters Card */
+.dark-mode .search-filters {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .search-filters .card-title,
+.dark-mode .search-filters .form-label {
+    color: #e0e0e0;
+}
+
+.dark-mode .search-filters .form-control,
+.dark-mode .search-filters .form-select {
+    background-color: #1a1a1a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .search-filters .form-control:focus,
+.dark-mode .search-filters .form-select:focus {
+    background-color: #333333;
+    border-color: #0d6efd;
+}
+
+/* Room Cards */
+.dark-mode .room-card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .room-card .card-title,
+.dark-mode .room-card .card-text {
+    color: #e0e0e0;
+}
+
+.dark-mode .room-card .price {
+    color: #6ea8fe;
+}
+
+.dark-mode .room-card .card-footer {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+/* Pagination */
+.dark-mode .pagination .page-link {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .pagination .page-link:hover {
+    background-color: #404040;
+    border-color: #505050;
+}
+
+.dark-mode .pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+.dark-mode .card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .card-header {
+    background-color: #404040;
+    border-bottom-color: #505050;
+}
+
+.dark-mode .list-group-item {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .table {
+    color: #e0e0e0;
+}
+
+.dark-mode .table td,
+.dark-mode .table th {
+    border-color: #404040;
+}
+
+.dark-mode .modal-content {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .modal-header {
+    border-bottom-color: #404040;
+}
+
+.dark-mode .modal-footer {
+    border-top-color: #404040;
+}
+
+.dark-mode .dropdown-menu {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .dropdown-item {
+    color: #e0e0e0;
+}
+
+.dark-mode .dropdown-item:hover {
+    background-color: #404040;
+    color: #ffffff;
+}
+
+.dark-mode .text-muted {
+    color: #a0a0a0 !important;
+}
+
+.dark-mode a {
+    color: #6ea8fe;
+}
+
+.dark-mode a:hover {
+    color: #8bb9fe;
+}
+
+.dark-mode .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.dark-mode .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.dark-mode .form-control {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .form-control:focus {
+    background-color: #333333;
+    border-color: #0d6efd;
+    color: #e0e0e0;
+}
+
+/* Dark Mode Scrollbar */
+.dark-mode ::-webkit-scrollbar {
+    width: 12px;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 6px;
+    border: 3px solid var(--background-color);
+}
+
+/* Dark Mode Selection */
+.dark-mode ::selection {
+    background-color: var(--primary-color);
+    color: var(--text-color);
+}
+
+/* Sidebar and Filter Styles */
+.dark-mode .sidebar {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .filter-section {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .filter-section h4,
+.dark-mode .filter-section label {
+    color: #e0e0e0;
+}
+
+.dark-mode .filter-section .form-control,
+.dark-mode .filter-section .form-select {
+    background-color: #1a1a1a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .filter-section .form-control:focus,
+.dark-mode .filter-section .form-select:focus {
+    background-color: #333333;
+    border-color: #0d6efd;
+}
+
+/* Room Details Page */
+.dark-mode .carousel {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .carousel-caption {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #e0e0e0;
+}
+
+.dark-mode .carousel-control-prev,
+.dark-mode .carousel-control-next {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .room-features {
+    color: #e0e0e0;
+}
+
+.dark-mode .room-features i {
+    color: #6ea8fe;
+}
+
+.dark-mode .alert-info {
+    background-color: #2d2d2d;
+    border-color: #0d6efd;
+    color: #e0e0e0;
+}
+
+.dark-mode #bookingForm {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    padding: 1rem;
+    border-radius: 0.375rem;
+}
+
+.dark-mode #bookingForm label {
+    color: #e0e0e0;
+}
+
+.dark-mode #bookingForm input[type="date"] {
+    background-color: #1a1a1a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode #bookingForm input[type="date"]:focus {
+    background-color: #333333;
+    border-color: #0d6efd;
+} 

@@ -1,0 +1,204 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "My Bookings" %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">{% trans "My Bookings" %}</h1>
+
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans "Filters" %}</h5>
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">{% trans "Status" %}</label>
+                            <select class="form-select" name="status" onchange="this.form.submit()">
+                                <option value="">{% trans "All" %}</option>
+                                <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>
+                                    {% trans "Confirmed" %}
+                                </option>
+                                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>
+                                    {% trans "Cancelled" %}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{% trans "Sort By" %}</label>
+                            <select class="form-select" name="sort" onchange="this.form.submit()">
+                                <option value="date" {% if request.GET.sort == 'date' %}selected{% endif %}>
+                                    {% trans "Date" %}
+                                </option>
+                                <option value="-date" {% if request.GET.sort == '-date' %}selected{% endif %}>
+                                    {% trans "Date (Descending)" %}
+                                </option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <!-- Bookings List -->
+            {% if bookings %}
+                {% for booking in bookings %}
+                    <div class="card mb-3 booking-card fade-in" data-booking-id="{{ booking.id }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <img src="{% if booking.room.images.first %}{{ booking.room.images.first.image.url }}{% else %}{% static 'images/default-room.jpg' %}{% endif %}"
+                                         class="img-fluid rounded" alt="{{ booking.room.name }}">
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title">{{ booking.room.name }}</h5>
+                                        <span class="badge {% if booking.status == 'confirmed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ booking.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar"></i> {% trans "Check-in Date" %}: {{ booking.date|date:"M d, Y" }}
+                                        </small>
+                                    </p>
+                                    <p class="card-text">
+                                        <i class="fas fa-bed"></i> {{ booking.room.get_type_display }}<br>
+                                        <i class="fas fa-user"></i> {% trans "Max Occupancy" %}: {{ booking.room.maxOccupancy }}<br>
+                                        <i class="fas fa-tag"></i> {{ booking.room.pricePerNight }} {{ booking.room.currency }}
+                                    </p>
+                                    {% if booking.status == 'confirmed' and booking.date|date:'Y-m-d' >= today|date:'Y-m-d' %}
+                                        <button class="btn btn-danger cancel-booking" data-booking-id="{{ booking.id }}">
+                                            <i class="fas fa-times"></i> {% trans "Cancel Booking" %}
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                        {% trans "Previous" %}
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                        {% trans "Next" %}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                    <h3>{% trans "No bookings found" %}</h3>
+                    <p class="text-muted">{% trans "You haven't made any bookings yet." %}</p>
+                    <a href="{% url 'home' %}" class="btn btn-primary">
+                        <i class="fas fa-search"></i> {% trans "Browse Rooms" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Booking Modal -->
+<div class="modal fade" id="cancelBookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Cancel Booking" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "Are you sure you want to cancel this booking? This action cannot be undone." %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "No, Keep It" %}</button>
+                <button type="button" class="btn btn-danger" id="confirmCancel">{% trans "Yes, Cancel It" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
+    let currentBookingId = null;
+
+    // Handle cancel booking button clicks
+    document.querySelectorAll('.cancel-booking').forEach(button => {
+        button.addEventListener('click', function() {
+            currentBookingId = this.dataset.bookingId;
+            cancelModal.show();
+        });
+    });
+
+    // Handle confirmation of cancellation
+    document.getElementById('confirmCancel').addEventListener('click', async function() {
+        if (!currentBookingId) return;
+
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> {% trans "Cancelling..." %}';
+
+        try {
+            const response = await fetch(`/booking/bookings/${currentBookingId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            // Update UI to reflect cancellation
+            const bookingCard = document.querySelector(`.booking-card[data-booking-id="${currentBookingId}"]`);
+            const statusBadge = bookingCard.querySelector('.badge');
+            const cancelButton = bookingCard.querySelector('.cancel-booking');
+
+            statusBadge.classList.remove('bg-success');
+            statusBadge.classList.add('bg-secondary');
+            statusBadge.textContent = '{% trans "Cancelled" %}';
+            cancelButton.remove();
+
+            cancelModal.hide();
+
+        } catch (error) {
+            alert('{% trans "An error occurred while cancelling the booking. Please try again." %}');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '{% trans "Yes, Cancel It" %}';
+        }
+    });
+});
+</script>
+{% endblock %} 

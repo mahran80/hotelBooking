@@ -1,0 +1,161 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Available Rooms" %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Search and Filters -->
+        <div class="col-lg-3">
+            <div class="card search-filters mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans "Search & Filters" %}</h5>
+                    <form id="searchForm" method="get">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">{% trans "Search" %}</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ request.GET.search }}" placeholder="{% trans 'Search rooms...' %}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="type" class="form-label">{% trans "Room Type" %}</label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="">{% trans "All Types" %}</option>
+                                {% for type in room_types %}
+                                    <option value="{{ type.0 }}" {% if request.GET.type == type.0 %}selected{% endif %}>
+                                        {{ type.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="maxOccupancy" class="form-label">{% trans "Max Occupancy" %}</label>
+                            <select class="form-select" id="maxOccupancy" name="maxOccupancy">
+                                <option value="">{% trans "Any" %}</option>
+                                {% for i in "12345"|make_list %}
+                                    <option value="{{ i }}" {% if request.GET.maxOccupancy == i %}selected{% endif %}>
+                                        {{ i }}+ {% trans "People" %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="priceRange" class="form-label">{% trans "Price Range" %}</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" class="form-control" id="minPrice" name="minPrice" 
+                                       placeholder="Min" value="{{ request.GET.minPrice }}">
+                                <input type="number" class="form-control" id="maxPrice" name="maxPrice" 
+                                       placeholder="Max" value="{{ request.GET.maxPrice }}">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> {% trans "Apply Filters" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Room Grid -->
+        <div class="col-lg-9">
+            {% if rooms %}
+                <div class="room-grid">
+                    {% for room in rooms %}
+                        <div class="room-card card h-100">
+                            <img src="{% if room.images.first %}{{ room.images.first.image.url }}{% else %}{% static 'images/default-room.jpg' %}{% endif %}"
+                                 class="card-img-top" alt="{{ room.name }}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ room.name }}</h5>
+                                <p class="card-text">{{ room.description|truncatewords:20 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="price">{{ room.pricePerNight }} {{ room.currency }}</span>
+                                    <span class="badge bg-info">{{ room.get_type_display }}</span>
+                                </div>
+                                <hr>
+                                <div class="room-features">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i> {% trans "Max Occupancy" %}: {{ room.maxOccupancy }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <a href="{% url 'room-detail' room.id %}" class="btn btn-primary w-100">
+                                    <i class="fas fa-info-circle"></i> {% trans "View Details" %}
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                                        {% trans "Previous" %}
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                                        {% trans "Next" %}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bed fa-4x text-muted mb-3"></i>
+                    <h3>{% trans "No rooms found" %}</h3>
+                    <p class="text-muted">{% trans "Try adjusting your search filters" %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const formInputs = searchForm.querySelectorAll('input, select');
+    
+    // Auto-submit form when select fields change
+    formInputs.forEach(input => {
+        if (input.tagName === 'SELECT') {
+            input.addEventListener('change', () => searchForm.submit());
+        }
+    });
+    
+    // Debounce function for search input
+    let timeout = null;
+    const searchInput = document.getElementById('search');
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            searchForm.submit();
+        }, 500);
+    });
+});
+</script>
+{% endblock %} 

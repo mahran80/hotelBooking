@@ -1,0 +1,116 @@
+{% load i18n %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <i class="fas fa-hotel"></i> {% trans "Room Booking" %}
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'room-list' %}">
+                        <i class="fas fa-bed"></i> {% trans "Rooms" %}
+                    </a>
+                </li>
+            </ul>
+            
+            <ul class="navbar-nav align-items-center">
+                <!-- Admin Button -->
+                {% if request.user.is_staff %}
+                <li class="nav-item me-3">
+                    <a class="nav-link" href="/admin/">
+                        <i class="fas fa-cog"></i> Admin
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Language Switcher -->
+                <li class="nav-item dropdown me-3">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-globe"></i> 
+                        {% if LANGUAGE_CODE == 'ar' %}
+                            العربية
+                        {% else %}
+                            English
+                        {% endif %}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input name="next" type="hidden" value="{{ request.path }}">
+                                <input name="language" type="hidden" value="en">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-language"></i> English
+                                </button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input name="next" type="hidden" value="{{ request.path }}">
+                                <input name="language" type="hidden" value="ar">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-language"></i> العربية
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Dark Mode Toggle -->
+                <li class="nav-item me-3">
+                    <button class="nav-link btn" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
+
+                {% if request.user.is_authenticated %}
+                    <!-- User Profile -->
+                    <li class="nav-item me-3">
+                        <a class="nav-link" href="{% url 'profile' %}">
+                            <i class="fas fa-user"></i> {{ request.user.username }}
+                        </a>
+                    </li>
+                    <!-- Logout Button -->
+                    <li class="nav-item">
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link">
+                                <i class="fas fa-sign-out-alt"></i> {% trans "Logout" %}
+                            </button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item me-2">
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt"></i> {% trans "Login" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">
+                            <i class="fas fa-user-plus"></i> {% trans "Register" %}
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* Make the logout button look like a nav-link */
+.navbar form button.nav-link {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.navbar form button.nav-link:hover {
+    color: var(--bs-primary);
+}
+</style> 

@@ -1,0 +1,192 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ room.name }} - {% trans "Room Details" %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Room Images -->
+        <div class="col-lg-8">
+            {% if room.images.all %}
+                <div id="roomCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for image in room.images.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" class="d-block w-100 rounded room-image" alt="{{ image.caption|default:room.name }}">
+                                {% if image.caption %}
+                                    <div class="carousel-caption d-none d-md-block">
+                                        <p>{{ image.caption }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if room.images.count > 1 %}
+                        <button class="carousel-control-prev" type="button" data-bs-target="#roomCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#roomCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    {% endif %}
+                </div>
+            {% else %}
+                <img src="{% static 'images/default-room.jpg' %}" class="img-fluid rounded room-image" alt="{{ room.name }}">
+            {% endif %}
+        </div>
+
+        <!-- Room Details and Booking -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">{{ room.name }}</h2>
+                    <p class="text-muted">
+                        <i class="fas fa-tag"></i> {{ room.get_type_display }}
+                    </p>
+                    <hr>
+                    <div class="room-features mb-3">
+                        <p>
+                            <i class="fas fa-user"></i> {% trans "Max Occupancy" %}: {{ room.maxOccupancy }}
+                        </p>
+                        <p>
+                            <i class="fas fa-money-bill"></i> {% trans "Price per Night" %}: 
+                            {{ room.pricePerNight }} {{ room.currency }}
+                        </p>
+                    </div>
+                    <p class="card-text">{{ room.description }}</p>
+                    
+                    {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'book-room' room.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="checkIn" class="form-label">{% trans "Check-in Date" %}</label>
+                                <input type="date" class="form-control" id="checkIn" name="check_in" required min="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="checkOut" class="form-label">{% trans "Check-out Date" %}</label>
+                                <input type="date" class="form-control" id="checkOut" name="check_out" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-calendar-check"></i> {% trans "Book Now" %}
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            {% trans "Please" %} <a href="{% url 'login' %}?next={{ request.path }}">{% trans "login" %}</a> 
+                            {% trans "to book this room." %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Control image size in carousel */
+.carousel-inner {
+    max-height: 500px;
+    overflow: hidden;
+}
+
+.room-image {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Make the carousel responsive */
+@media (max-width: 768px) {
+    .carousel-inner {
+        max-height: 300px;
+    }
+    .room-image {
+        height: 300px;
+    }
+}
+</style>
+
+<!-- Booking Success Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Booking Confirmation" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="bookingMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'profile' %}" class="btn btn-primary">{% trans "View My Bookings" %}</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bookingForm = document.getElementById('bookingForm');
+    const bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+    const bookingMessage = document.getElementById('bookingMessage');
+    const checkInInput = document.getElementById('checkIn');
+    const checkOutInput = document.getElementById('checkOut');
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.min = today;
+    
+    // Update checkout min date when checkin changes
+    checkInInput.addEventListener('change', function() {
+        checkOutInput.min = this.value;
+        if (checkOutInput.value && checkOutInput.value < this.value) {
+            checkOutInput.value = this.value;
+        }
+    });
+    
+    // Disable occupied dates
+    const occupiedDates = {{ occupied_dates|safe }};
+    const isDateOccupied = (date) => occupiedDates.includes(date);
+    
+    // Handle form submission
+    bookingForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const button = document.getElementById('bookButton');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> {% trans "Processing..." %}';
+        
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: new FormData(this)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                bookingMessage.textContent = '{% trans "Your booking has been confirmed!" %}';
+                bookingModal.show();
+                this.reset();
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-calendar-check"></i> {% trans "Book Now" %}';
+        }
+    });
+});
+</script>
+{% endblock %} 

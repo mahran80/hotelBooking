@@ -1,0 +1,130 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}
+    {% if room %}
+        {% translate "Edit Room" %}: {{ room.name }}
+    {% else %}
+        {% translate "Add New Room" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            {% if room %}
+                {% translate "Edit Room" %}: {{ room.name }}
+            {% else %}
+                {% translate "Add New Room" %}
+            {% endif %}
+        </h2>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="name" class="form-label">{% translate "Room Name" %}</label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       value="{{ room.name }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="type" class="form-label">{% translate "Room Type" %}</label>
+                <select class="form-select" id="type" name="type" required>
+                    {% for type_code, type_name in room_types %}
+                        <option value="{{ type_code }}" 
+                                {% if room and room.type == type_code %}selected{% endif %}>
+                            {{ type_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="pricePerNight" class="form-label">{% translate "Price per Night" %}</label>
+                    <input type="number" class="form-control" id="pricePerNight" name="pricePerNight" 
+                           value="{{ room.pricePerNight }}" required min="0">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="currency" class="form-label">{% translate "Currency" %}</label>
+                    <select class="form-select" id="currency" name="currency" required>
+                        {% for currency_code, currency_name in currency_types %}
+                            <option value="{{ currency_code }}"
+                                    {% if room and room.currency == currency_code %}selected{% endif %}>
+                                {{ currency_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="maxOccupancy" class="form-label">{% translate "Maximum Occupancy" %}</label>
+                <input type="number" class="form-control" id="maxOccupancy" name="maxOccupancy" 
+                       value="{{ room.maxOccupancy }}" required min="1">
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">{% translate "Description" %}</label>
+                <textarea class="form-control" id="description" name="description" 
+                          rows="4" required>{{ room.description }}</textarea>
+            </div>
+
+            {% if room %}
+                <div class="mb-3">
+                    <label class="form-label">{% translate "Current Images" %}</label>
+                    <div class="d-flex gap-3 flex-wrap">
+                        {% for image in room.images.all %}
+                            <div class="position-relative">
+                                <img src="{{ image.image.url }}" alt="{{ image.caption }}" 
+                                     class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 delete-image" 
+                                        data-image-id="{{ image.id }}" style="padding: 0 4px;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="images" class="form-label">{% translate "Add Images" %}</label>
+                <input type="file" class="form-control" id="images" name="images" multiple 
+                       accept="image/*">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% translate "Save Room" %}
+                </button>
+                <a href="{% url 'admin-rooms' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> {% translate "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.delete-image').click(function(e) {
+        e.preventDefault();
+        const imageId = $(this).data('image-id');
+        if (confirm('{% translate "Are you sure you want to delete this image?" %}')) {
+            $.post('{% url "admin-image-delete" 0 %}'.replace('0', imageId), {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            }).done(function() {
+                location.reload();
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

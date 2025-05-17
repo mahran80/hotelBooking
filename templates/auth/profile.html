@@ -1,0 +1,254 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "My Profile" %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Profile Info -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-5x text-muted"></i>
+                    </div>
+                    <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="text-muted">{% trans "Member since" %} {{ user.date_joined|date:"M Y" }}</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-envelope me-2"></i> {{ user.email }}
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-calendar-check me-2"></i> 
+                        {% trans "Total Bookings" %}: {{ bookings.count }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Bookings -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{% trans "My Bookings" %}</h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                            {% trans "All" %}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="upcoming">
+                            {% trans "Upcoming" %}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="past">
+                            {% trans "Past" %}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Room" %}</th>
+                                        <th>{% trans "Check-in" %}</th>
+                                        <th>{% trans "Check-out" %}</th>
+                                        <th>{% trans "Price/Night" %}</th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr class="booking-row {% if booking.date|date:'Y-m-d' < today|date:'Y-m-d' %}past-booking{% else %}upcoming-booking{% endif %}">
+                                            <td>
+                                                <a href="{% url 'room-detail' booking.room.id %}" class="text-decoration-none">
+                                                    {{ booking.room.name }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="booking-date">{{ booking.date|date:"M d, Y" }}</span>
+                                                <input type="date" class="form-control d-none edit-date" 
+                                                       value="{{ booking.date|date:'Y-m-d' }}"
+                                                       min="{{ today|date:'Y-m-d' }}"
+                                                       data-booking-id="{{ booking.id }}">
+                                            </td>
+                                            <td>
+                                                <span class="booking-checkout">{{ booking.checkout_date|date:"M d, Y"|default:"-" }}</span>
+                                                <input type="date" class="form-control d-none edit-checkout" 
+                                                       value="{{ booking.checkout_date|date:'Y-m-d' }}"
+                                                       data-booking-id="{{ booking.id }}">
+                                            </td>
+                                            <td>{{ booking.room.pricePerNight }} {{ booking.room.currency }}</td>
+                                            <td>
+                                                {% if booking.date|date:"Y-m-d" >= today|date:"Y-m-d" %}
+                                                    <div class="btn-group">
+                                                        <button class="btn btn-sm btn-primary edit-booking" data-booking-id="{{ booking.id }}">
+                                                            <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                        </button>
+                                                        <form action="{% url 'cancel-booking' booking.id %}" method="post" class="d-inline">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                                    onclick="return confirm('{% trans "Are you sure you want to cancel this booking?" %}')">
+                                                                <i class="fas fa-times"></i> {% trans "Cancel" %}
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                    <div class="btn-group d-none save-cancel-group">
+                                                        <button class="btn btn-sm btn-success save-booking" data-booking-id="{{ booking.id }}">
+                                                            <i class="fas fa-check"></i> {% trans "Save" %}
+                                                        </button>
+                                                        <button class="btn btn-sm btn-secondary cancel-edit">
+                                                            <i class="fas fa-times"></i> {% trans "Cancel" %}
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{% trans "Past Booking" %}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
+                            <h4>{% trans "No Bookings Yet" %}</h4>
+                            <p class="text-muted">{% trans "You haven't made any room bookings yet." %}</p>
+                            <a href="{% url 'room-list' %}" class="btn btn-primary">
+                                <i class="fas fa-search"></i> {% trans "Browse Rooms" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Booking Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Error" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Filter buttons
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Filter bookings
+            const filter = this.dataset.filter;
+            document.querySelectorAll('.booking-row').forEach(row => {
+                if (filter === 'all') {
+                    row.style.display = '';
+                } else if (filter === 'upcoming' && row.classList.contains('upcoming-booking')) {
+                    row.style.display = '';
+                } else if (filter === 'past' && row.classList.contains('past-booking')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Edit booking
+    document.querySelectorAll('.edit-booking').forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            
+            // Show date inputs
+            row.querySelectorAll('.booking-date, .booking-checkout').forEach(span => span.classList.add('d-none'));
+            row.querySelectorAll('.edit-date, .edit-checkout').forEach(input => input.classList.remove('d-none'));
+            
+            // Show save/cancel buttons
+            row.querySelector('.btn-group').classList.add('d-none');
+            row.querySelector('.save-cancel-group').classList.remove('d-none');
+        });
+    });
+
+    // Cancel edit
+    document.querySelectorAll('.cancel-edit').forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            
+            // Hide date inputs
+            row.querySelectorAll('.booking-date, .booking-checkout').forEach(span => span.classList.remove('d-none'));
+            row.querySelectorAll('.edit-date, .edit-checkout').forEach(input => input.classList.add('d-none'));
+            
+            // Show original buttons
+            row.querySelector('.btn-group').classList.remove('d-none');
+            row.querySelector('.save-cancel-group').classList.add('d-none');
+        });
+    });
+
+    // Save booking changes
+    document.querySelectorAll('.save-booking').forEach(button => {
+        button.addEventListener('click', async function() {
+            const row = this.closest('tr');
+            const bookingId = this.dataset.bookingId;
+            const checkIn = row.querySelector('.edit-date').value;
+            const checkOut = row.querySelector('.edit-checkout').value;
+
+            try {
+                const response = await fetch(`/api/bookings/${bookingId}/update/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        check_in: checkIn,
+                        check_out: checkOut
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    // Update displayed dates
+                    row.querySelector('.booking-date').textContent = new Date(checkIn).toLocaleDateString();
+                    row.querySelector('.booking-checkout').textContent = new Date(checkOut).toLocaleDateString();
+                    
+                    // Hide edit interface
+                    row.querySelectorAll('.booking-date, .booking-checkout').forEach(span => span.classList.remove('d-none'));
+                    row.querySelectorAll('.edit-date, .edit-checkout').forEach(input => input.classList.add('d-none'));
+                    row.querySelector('.btn-group').classList.remove('d-none');
+                    row.querySelector('.save-cancel-group').classList.add('d-none');
+                    
+                    location.reload(); // Refresh to show updated data
+                } else {
+                    throw new Error(data.error || 'Failed to update booking');
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message;
+                errorModal.show();
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
