@@ -18,6 +18,16 @@ full functionality hotel booking app created with django rest framework in backe
 
 ---
 
+## Screenshots
+
+![Screen 1](docs/1.png)
+![Screen 2](docs/2.png)
+![Screen 3](docs/3.png)
+![Screen 4](docs/4.png)
+![Screen 5](docs/5.png)
+![Screen 6](docs/6.png)
+
+
 ## Project Structure
 
 ```
