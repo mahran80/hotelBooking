@@ -131,6 +131,5 @@ This project is licensed under the MIT License.
 
 ---
 
-**If you need a separate README for a frontend (React/Next.js) or want to add more details, let me know!**
 
 
